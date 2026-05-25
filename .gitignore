@@ -8,6 +8,9 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+
+# Google Services
+app/google-services.json
 /build
 /captures
 .externalNativeBuild
