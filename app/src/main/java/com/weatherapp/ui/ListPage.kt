@@ -25,10 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weatherapp.model.City
 import com.weatherapp.model.MainViewModel
+import com.weatherapp.model.Weather
 
 @Composable
-fun ListPage(modifier: Modifier = Modifier,
-             viewModel: MainViewModel) {
+fun ListPage(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel
+) {
     val cityList = viewModel.cities
     val activity = LocalActivity.current as? Activity
 
@@ -37,9 +40,10 @@ fun ListPage(modifier: Modifier = Modifier,
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        items(cityList, key = { it.name }) { city ->
+        items(items = cityList, key = { it.name }) { city ->
             CityItem(
                 city = city,
+                weather = viewModel.weather(city.name),
                 onClose = {
                     viewModel.remove(city)
                     android.widget.Toast.makeText(
@@ -63,10 +67,12 @@ fun ListPage(modifier: Modifier = Modifier,
 @Composable
 fun CityItem(
     city: City,
+    weather: Weather,
     onClick: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
     Row(
         modifier = modifier.fillMaxWidth().padding(8.dp).clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
@@ -77,12 +83,16 @@ fun CityItem(
         )
         Spacer(modifier = Modifier.size(12.dp))
         Column(modifier = modifier.weight(1f)) {
-            Text(modifier = Modifier,
+            Text(
+                modifier = Modifier,
                 text = city.name,
-                fontSize = 24.sp)
-            Text(modifier = Modifier,
-                text = city.weather?:"Carregando clima...",
-                fontSize = 16.sp)
+                fontSize = 24.sp
+            )
+            Text(
+                modifier = Modifier,
+                text = desc,
+                fontSize = 16.sp
+            )
         }
         IconButton(onClick = onClose) {
             Icon(Icons.Filled.Close, contentDescription = "Close")

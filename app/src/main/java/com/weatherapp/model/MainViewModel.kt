@@ -1,11 +1,12 @@
 package com.weatherapp.model
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.maps.model.LatLng
 import com.weatherapp.api.WeatherService
+import com.weatherapp.api.toWeather
 import com.weatherapp.db.fb.FBCity
 import com.weatherapp.db.fb.FBDatabase
 import com.weatherapp.db.fb.FBUser
@@ -13,9 +14,11 @@ import com.weatherapp.db.fb.toFBCity
 import com.weatherapp.db.fb.toFBUser
 
 class MainViewModel(private val db: FBDatabase, private val service: WeatherService) : ViewModel(), FBDatabase.Listener {
-    private val _cities = mutableStateListOf<City>()
-    val cities
-        get() = _cities.toList()
+    private val _cities = mutableStateMapOf<String, City>()
+    val cities: List<City>
+        get() = _cities.values.toList().sortedBy { it.name }
+
+    private val _weather = mutableStateMapOf<String, Weather>()
 
     private val _user = mutableStateOf<User?>(null)
     val user: User?
@@ -45,6 +48,19 @@ class MainViewModel(private val db: FBDatabase, private val service: WeatherServ
         }
     }
 
+    fun weather(name: String) = _weather.getOrPut(name) {
+        loadWeather(name)
+        Weather.LOADING
+    }
+
+    private fun loadWeather(name: String) {
+        service.getWeather(name) { apiWeather ->
+            apiWeather?.let {
+                _weather[name] = apiWeather.toWeather()
+            }
+        }
+    }
+
     override fun onUserLoaded(user: FBUser) {
         _user.value = user.toUser()
     }
@@ -54,15 +70,16 @@ class MainViewModel(private val db: FBDatabase, private val service: WeatherServ
     }
 
     override fun onCityAdded(city: FBCity) {
-        _cities.add(city.toCity())
+        _cities[city.name!!] = city.toCity()
     }
 
     override fun onCityUpdated(city: FBCity) {
-        //TODO("Not yet implemented")
+        _cities.remove(city.name)
+        _cities[city.name!!] = city.toCity()
     }
 
     override fun onCityRemoved(city: FBCity) {
-        _cities.remove(city.toCity())
+        _cities.remove(city.name)
     }
 }
 
