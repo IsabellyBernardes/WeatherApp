@@ -1,6 +1,7 @@
 package com.weatherapp.ui
 
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -70,18 +71,21 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
             )
 
             viewModel.cities.forEach {
-                if (it.location != null) {
+                val location = it.location
+                if (location != null) {
                     val weather = viewModel.weather(it.name)
 
                     val image = weather.bitmap
                         ?: ContextCompat.getDrawable(context, R.drawable.loading)!!.toBitmap()
 
-                    val marker = BitmapDescriptorFactory.fromBitmap(image.scale(120, 120))
+                    val marker = BitmapDescriptorFactory.fromBitmap(
+                        Bitmap.createScaledBitmap(image, 120, 120, true)
+                    )
 
                     val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
 
                     Marker(
-                        state = MarkerState(position = it.location),
+                        state = MarkerState(position = location),
                         icon = marker,
                         title = it.name,
                         snippet = desc
