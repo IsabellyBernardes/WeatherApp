@@ -24,6 +24,8 @@ class MainViewModel(private val db: FBDatabase, private val service: WeatherServ
     val user: User?
         get() = _user.value
 
+    var city: String? = null
+
     init {
         db.setListener(this)
     }
