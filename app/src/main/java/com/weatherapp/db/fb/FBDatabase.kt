@@ -57,11 +57,13 @@ class FBDatabase {
         this.listener = listener
     }
 
-    fun register(user: FBUser) {
+    fun register(user: FBUser, onSuccess: () -> Unit = {}, onFailure: (Exception) -> Unit = {}) {
         if (auth.currentUser == null)
             throw RuntimeException("User not logged in!")
         val uid = auth.currentUser!!.uid
-        db.collection("users").document(uid + "").set(user)
+        db.collection("users").document(uid).set(user)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
     }
 
     fun add(city: FBCity) {

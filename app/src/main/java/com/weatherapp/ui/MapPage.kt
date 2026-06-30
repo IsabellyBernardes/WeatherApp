@@ -14,12 +14,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import androidx.compose.runtime.key
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import com.weatherapp.R
 import com.weatherapp.model.MainViewModel
 import com.weatherapp.model.Weather
@@ -70,26 +72,28 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                 icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)
             )
 
-            viewModel.cities.forEach {
-                val location = it.location
+            viewModel.cities.forEach { city ->
+                val location = city.location
                 if (location != null) {
-                    val weather = viewModel.weather(it.name)
+                    key(city.name) {
+                        val weather = viewModel.weather(city.name)
 
-                    val image = weather.bitmap
-                        ?: ContextCompat.getDrawable(context, R.drawable.loading)!!.toBitmap()
+                        val image = weather.bitmap
+                            ?: ContextCompat.getDrawable(context, R.drawable.loading)!!.toBitmap()
 
-                    val marker = BitmapDescriptorFactory.fromBitmap(
-                        Bitmap.createScaledBitmap(image, 120, 120, true)
-                    )
+                        val marker = BitmapDescriptorFactory.fromBitmap(
+                            Bitmap.createScaledBitmap(image, 120, 120, true)
+                        )
 
-                    val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
+                        val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
 
-                    Marker(
-                        state = MarkerState(position = location),
-                        icon = marker,
-                        title = it.name,
-                        snippet = desc
-                    )
+                        Marker(
+                            state = rememberMarkerState(position = location),
+                            icon = marker,
+                            title = city.name,
+                            snippet = desc
+                        )
+                    }
                 }
             }
         }

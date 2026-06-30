@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.weatherapp.db.fb.FBDatabase
@@ -120,18 +121,30 @@ fun RegisterPage(modifier: Modifier = Modifier) {
                     Firebase.auth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(activity) { task ->
                             if (task.isSuccessful) {
-                                FBDatabase().register(User(nome, email).toFBUser())
-                                Toast.makeText(activity,
-                                    "Registro OK!", Toast.LENGTH_LONG).show()
-                                activity.startActivity(
-                                    Intent(activity, MainActivity::class.java).setFlags(
-                                        Intent.FLAG_ACTIVITY_SINGLE_TOP
-                                    )
+                                val uid = Firebase.auth.currentUser?.uid
+                                Log.d("REGISTER", "Auth OK - UID: $uid")
+                                FBDatabase().register(
+                                    user = User(nome, email).toFBUser(),
+                                    onSuccess = {
+                                        Log.d("REGISTER", "Firestore write SUCCESS - UID: $uid")
+                                        Toast.makeText(activity,
+                                            "Registro OK!", Toast.LENGTH_LONG).show()
+                                        activity.startActivity(
+                                            Intent(activity, MainActivity::class.java).setFlags(
+                                                Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                            )
+                                        )
+                                        activity.finish()
+                                    },
+                                    onFailure = { e ->
+                                        Log.e("REGISTER", "Firestore write FAILED", e)
+                                        Toast.makeText(activity,
+                                            "Erro ao salvar dados: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
                                 )
-                                activity.finish()
                             } else {
                                 Toast.makeText(activity,
-                                    "Registro FALHOU!", Toast.LENGTH_LONG).show()
+                                    "Registro FALHOU: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                             }
                         }
                 },
