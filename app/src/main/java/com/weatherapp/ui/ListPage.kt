@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -28,6 +30,7 @@ import com.weatherapp.R
 import com.weatherapp.model.City
 import com.weatherapp.model.MainViewModel
 import com.weatherapp.model.Weather
+import com.weatherapp.ui.nav.Route
 
 @Composable
 fun ListPage(
@@ -56,11 +59,7 @@ fun ListPage(
                 },
                 onClick = {
                     viewModel.city = city.name
-                    android.widget.Toast.makeText(
-                        activity,
-                        "Clicou em ${city.name}",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                    viewModel.page = Route.Home
                 }
             )
         }
@@ -99,6 +98,13 @@ fun CityItem(
                 fontSize = 16.sp
             )
         }
+        val icon = if (city.isMonitored) Icons.Filled.Notifications
+        else Icons.Outlined.Notifications
+        Icon(
+            imageVector = icon,
+            contentDescription = "Monitorada?",
+            modifier = Modifier.size(24.dp)
+        )
         IconButton(onClick = onClose) {
             Icon(Icons.Filled.Close, contentDescription = "Close")
         }
