@@ -5,9 +5,11 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -48,12 +50,23 @@ fun MapPage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = MapUiSettings(myLocationButtonEnabled = true)
         ) {
-            viewModel.cities.forEach { city ->
+            val cities = viewModel.cities.collectAsStateWithLifecycle(emptyMap()).value
+            val weatherMap = viewModel.weather.collectAsStateWithLifecycle(emptyMap()).value
+
+            cities.values.forEach { city ->
                 val location = city.location
                 if (location != null) {
-                    key(city.name) {
-                        val weather = viewModel.weather(city.name)
+                    val weather = weatherMap[city.name] ?: Weather.LOADING
 
+                    LaunchedEffect(city.name) {
+                        viewModel.loadWeather(city.name)
+                    }
+
+                    LaunchedEffect(weather) {
+                        viewModel.loadBitmap(city.name)
+                    }
+
+                    key(city.name) {
                         val image = weather.bitmap
                             ?: ContextCompat.getDrawable(context, R.drawable.loading)!!.toBitmap()
 

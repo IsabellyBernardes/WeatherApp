@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,11 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.weatherapp.R
 import com.weatherapp.model.Forecast
 import com.weatherapp.model.MainViewModel
-import java.text.DecimalFormat
 
 @Composable
 fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
@@ -52,10 +53,23 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                 )
             }
         } else {
-            val city = viewModel.cities.find { it.name == viewModel.city }
+            val cities = viewModel.cities.collectAsStateWithLifecycle(emptyMap()).value
+            val city = cities[viewModel.city!!]
+            val weather = viewModel.weather.collectAsStateWithLifecycle(emptyMap())
+                .value[viewModel.city!!]
+            val icon = if (city?.isMonitored == true) Icons.Filled.Notifications
+            else Icons.Outlined.Notifications
+            val forecasts = viewModel.forecast.collectAsStateWithLifecycle(emptyMap())
+                .value[viewModel.city!!]
+            LaunchedEffect(viewModel.city!!) {
+                viewModel.loadWeather(viewModel.city!!)
+            }
+            LaunchedEffect(viewModel.city!!) {
+                viewModel.loadForecast(viewModel.city!!)
+            }
             Row {
                 AsyncImage(
-                    model = viewModel.weather(viewModel.city!!).imgUrl,
+                    model = weather?.imgUrl,
                     modifier = modifier.size(140.dp),
                     error = painterResource(id = R.drawable.loading),
                     contentDescription = "Imagem"
@@ -68,8 +82,6 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                             fontSize = 28.sp
                         )
                         Spacer(modifier = modifier.size(8.dp))
-                        val icon = if (city?.isMonitored == true) Icons.Filled.Notifications
-                        else Icons.Outlined.Notifications
                         Icon(
                             imageVector = icon,
                             contentDescription = "Monitorada?",
@@ -80,17 +92,14 @@ fun HomePage(modifier: Modifier = Modifier, viewModel: MainViewModel) {
                                 }
                         )
                     }
-                    viewModel.city?.let { name ->
-                        val weather = viewModel.weather(name)
-                        Spacer(modifier = modifier.size(12.dp))
-                        Text(text = weather.desc, fontSize = 22.sp)
-                        Spacer(modifier = modifier.size(12.dp))
-                        Text(text = "Temp: " + weather.temp + "℃", fontSize = 22.sp)
-                    }
+                    Spacer(modifier = modifier.size(12.dp))
+                    Text(text = weather?.desc ?: "...", fontSize = 22.sp)
+                    Spacer(modifier = modifier.size(12.dp))
+                    Text(text = "Temp: " + (weather?.temp ?: "...") + "℃", fontSize = 22.sp)
                 }
             }
 
-            viewModel.forecast(viewModel.city!!)?.let { forecasts ->
+            forecasts?.let { forecasts ->
                 LazyColumn {
                     items(items = forecasts) { forecast ->
                         ForecastItem(forecast, onClick = { })
@@ -107,7 +116,7 @@ fun ForecastItem(
     modifier: Modifier = Modifier,
     onClick: (Forecast) -> Unit
 ) {
-    val format = DecimalFormat("#.0")
+    val format = java.text.DecimalFormat("#.0")
     val tempMin = format.format(forecast.tempMin)
     val tempMax = format.format(forecast.tempMax)
 
