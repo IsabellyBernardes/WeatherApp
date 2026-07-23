@@ -36,8 +36,10 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.weatherapp.api.WeatherService
 import com.weatherapp.db.fb.FBDatabase
+import com.weatherapp.db.local.LocalDatabase
 import com.weatherapp.monitor.ForecastMonitor
 import com.weatherapp.model.MainViewModel
+import com.weatherapp.repo.Repository
 import com.weatherapp.model.MainViewModelFactory
 import com.weatherapp.ui.CityDialog
 import com.weatherapp.ui.nav.BottomNavBar
@@ -54,10 +56,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             var showDialog by remember { mutableStateOf(false) }
             val fbDB = remember { FBDatabase() }
+            val uid = Firebase.auth.currentUser?.uid ?: "guest"
+            val localDB = remember { LocalDatabase(this, "$uid.db") }
+            val repository = remember { Repository(fbDB, localDB) }
             val weatherService = remember { WeatherService(this) }
             val monitor = remember { ForecastMonitor(this) }
             val viewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(fbDB, weatherService, monitor)
+                factory = MainViewModelFactory(repository, weatherService, monitor)
             )
             DisposableEffect(Unit) {
                 val listener = Consumer<Intent> { intent ->
